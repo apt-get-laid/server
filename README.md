@@ -5,16 +5,41 @@ First, some changes need to be applied in the *BIOS* and then you have to allow 
 
 | BIOS Input  | GRUB Entry | Reasoning |
 | ------------- | ------------- | ------------- |
-| IOMMU = Enable | amd_iommu=on | Enable the IOMMU on the kernel. |
-| N/A | iommu=pt | If the HW supports IOMMU, this will bypass the default DMA translation normally performed by the hypervisor and instead pass DMA requests directly to the hardware IOMMU.|
-| ACS Enable = Enable | pcie_acs_override=downstream | ACS (Access Control Services) to have separate IOMMU Groups |
-| N/A | video=efifb:off | Disable the generic EFI platform driver for systems with UEFI firmware |
+| AMD CBS > NBIO Common Options > IOMMU = Enable | amd_iommu=on | Enable the IOMMU on the kernel. |
+| N/A | iommu=pt | If the HW supports IOMMU, this will bypass the default DMA translation normally performed by the hypervisor and instead pass DMA requests directly to the hardware IOMMU. |
+| AMD CBS > ACS Enable = Enable | pcie_acs_override=downstream | ACS (Access Control Services) to have separate IOMMU Groups. |
+| AMD CBS > CPU Common Options > Enable AER Cap = Enable | " | Enables Advanced Error Reporting, needed for ACS. |
+| N/A | video=efifb:off | Disable the generic EFI platform driver for systems with UEFI firmware. |
+| AMD CBS > CPU Common Options > Local APIC Mode = x2APIC | helps operating systems run more efficiently on high core count configurations and optimizes interrupt distribution in virtualized environments. |
+DMAr Support = Enabled
 
 To apply the chagnes in the bootloader, edit inside `/etc/default/` the file called `grub`:
 ```
 GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt pcie_acs_override=downstream,multifunction video=efifb:off"
 ```
 And then run `update-grub` and `reboot`
+After rebooting check that the ouptut of:
+```
+# dmesg | grep -e DMAR -e IOMMU -e AMD-Vi
+```
+verifies that the config is set properly.
+Edit within `/etc/default/` the file called `modules`:
+```
+vfio
+vfio_iommu_type1
+vfio_pci
+```
+Then run:
+```
+$update-initramfs -u -k all
+$lsmod | grep vfio
+```
+and verify that the modules have been successfully loaded.
+Finally edit in `/etc/pve/qemu-server/` your VM `.conf` file:
+```
+cpu: host,hidden=1,flags=+pcid
+```
+so the Machine does not know it is virtualised.
 ### Windows Package Manager (winget)
 In the Powershell, insert the following code:
 ```
