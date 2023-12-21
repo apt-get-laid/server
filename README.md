@@ -40,6 +40,14 @@ Finally edit in `/etc/pve/qemu-server/` your VM `.conf` file:
 cpu: host,hidden=1,flags=+pcid
 ```
 so the Machine does not know it is virtualised.
+Blacklist the GPU Drivers in `etc/modprobe.d` and edit `pve-blacklist.conf`
+```
+blacklist nvidiafb
+blacklist nvidia
+blacklist radeon
+blacklist nouveau
+```
+
 ### Windows Package Manager (winget)
 In the Powershell, insert the following code:
 ```
