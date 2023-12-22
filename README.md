@@ -68,8 +68,10 @@ Add-AppxPackage -Path "Setup.msix"
 Remove-Item "Setup.msix"
 ```
 ## Install all the must-have applications
-All the applications listed below are Open Source.
+All the applications listed below are freeware.
 ```
 # Install 7zip [compressed files manager]
 winget install -e --id 7zip.7zip --accept-source-agreements --accept-package-agreements
+# Install Steam
+winget install -e --id Valve.Steam
 ```
