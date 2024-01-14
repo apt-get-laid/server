@@ -1,5 +1,29 @@
-# Setting Up the server
-# Configuring for PROXMOX
+# Installing Proxmox Torubleshooting
+As the Graphival installation of Proxmox fails to load, a generic dummy VGA driver needs to be created. We will do this from the "Graphical Deubg Installation"
+First needs to be indentified that the error is the one that we think. For that we hit `Ctrl + Alt + F2` and check that the error is *"Cannot run in framebuffer mode. Please specify busIDs for all framebuffer devices"*. After that we go back to the console with `Ctrl + Alt + F1`.
+Then we get the PCI ID of our GPU:
+```
+# lspci | grep -i vga
+```
+For this tutorial, we are going to assume that the ID is *06:0:0*.
+Then we create the dummy driver:
+```
+# cd /usr/share/X11/xorg.conf.d/
+# nano driver-nvidia.conf
+```
+The contetnts of this file would be:
+```
+Section "Device"
+    Identifier "Card0"
+    Driver "fbdev"
+    BusID "pci0:01:0:0:"
+EndSection
+```
+Finally, we restat X:
+```
+# xinit -- -dpi 96 >/dev/tty2 2>&1
+```
+# Setting Up the server in PROXMOX
 ## GPU Passthrough
 First, some changes need to be applied in the *BIOS* and then you have to allow these changes from the Bootloader:
 
