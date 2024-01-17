@@ -32,7 +32,7 @@ First, some changes need to be applied in the *BIOS* and then you have to allow 
 | AMD CBS > NBIO Common Options > IOMMU = Enable | amd_iommu=on | Enable the IOMMU on the kernel. |
 | N/A | iommu=pt | If the HW supports IOMMU, this will bypass the default DMA translation normally performed by the hypervisor and instead pass DMA requests directly to the hardware IOMMU. |
 | AMD CBS > ACS Enable = Enable | pcie_acs_override=downstream | ACS (Access Control Services) to have separate IOMMU Groups. |
-| AMD CBS > CPU Common Options > Enable AER Cap = Enable | " | Enables Advanced Error Reporting, needed for ACS. |
+| AMD CBS > NBIO Common Options > Enable AER Cap = Enable | " | Enables Advanced Error Reporting, needed for ACS. |
 | N/A | video=efifb:off | Disable the generic EFI platform driver for systems with UEFI firmware. |
 | AMD CBS > CPU Common Options > Local APIC Mode = x2APIC | helps operating systems run more efficiently on high core count configurations and optimizes interrupt distribution in virtualized environments. |
 DMAr Support = Enabled
