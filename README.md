@@ -1,4 +1,5 @@
-# Installing Proxmox Torubleshooting
+# Installing Proxmox 
+## Troubleshooting
 As the Graphival installation of Proxmox fails to load, a generic dummy VGA driver needs to be created. We will do this from the "Graphical Deubg Installation"
 First needs to be indentified that the error is the one that we think. For that we hit `Ctrl + Alt + F2` and check that the error is *"Cannot run in framebuffer mode. Please specify busIDs for all framebuffer devices"*. After that we go back to the console with `Ctrl + Alt + F1`.
 Then we get the PCI ID of our GPU:
@@ -23,8 +24,8 @@ Finally, we restat X:
 ```
 # xinit -- -dpi 96 >/dev/tty2 2>&1
 ```
-# Setting Up the server in PROXMOX
-## GPU Passthrough
+## Setting Up the server in PROXMOX
+### GPU Passthrough
 First, some changes need to be applied in the *BIOS* and then you have to allow these changes from the Bootloader:
 
 | BIOS Input  | GRUB Entry | Reasoning |
@@ -59,11 +60,9 @@ $update-initramfs -u -k all
 $lsmod | grep vfio
 ```
 and verify that the modules have been successfully loaded.
-Finally edit in `/etc/pve/qemu-server/` your VM `.conf` file:
-```
-cpu: host,hidden=1,flags=+pcid
-```
-so the Machine does not know it is virtualised.
+
+## Avoiding Windows and EasyAntiCheat to detect the VM
+So the Machine does not know it is virtualised.
 Blacklist the GPU Drivers in `etc/modprobe.d` and edit `pve-blacklist.conf`
 ```
 blacklist nvidiafb
@@ -71,7 +70,75 @@ blacklist nvidia
 blacklist radeon
 blacklist nouveau
 ```
+### Create an undetectable VM
 
+Click on "Create VM" (top right in the GUI)
+1. (General): Give your VM a name and an ID. Also select the "Advanced" option at the bottom of the window. We'll need some advanced settings later.
+2. (OS): Select the ISO you uploaded and select "Microsoft Windows" as the Guest OS type. Note: We do not need any VirtIO drivers!
+3. (System):
+```
+    Graphics card: Default
+    Machine: q35
+    BIOS: OVMF (UEFI)
+    Add EFI Disk: yes
+    SCSI Controller: LSI 53C895A
+    Qemu Agent: no
+    Add TPM: yes
+```
+4. (Disks):
+```
+    Bus/Device: SATA
+    Cache: Write back
+```
+5. (CPU):
+```
+    Sockets: 1
+    Cores: However many cores you want
+    Type: host
+```
+6. (Memory):
+```
+    Memory: however much memory you want
+    Ballooning Device: no
+```
+7. (Network):
+```
+   Model: Intel E1000
+```
+8.: Confirm your settings, create the VM, **but don't start it yet!**
+
+Note: The reason why we choose LSI for our SCSI controller, SATA for your disks, and the Intel E1000 network card is because we don't need any virtio drivers for any of those. In my experience, as soon as you add the Qemu gest agent or add any virtio drivers, Windows knows it's a VM.
+
+Now, we add our GPU to the VM.
+Select your VM in the menu on the left, then click on "Hardware". Now click "add" and select "PCI Device". Select "Raw Device" and find your GPU in the drop down menu. Make sure you select the GPU and not the audio controller! Tick the "Primary GPU" and "PCI-Express" boxes. For the "PCI-Express" box you need to select "Advanced" at the bottom of the window. Do not select the "All Functions" checkbox!
+Repeat the process for the GPUs audio device but this time don't tick the "Primary GPU" checkbox.
+
+Do not start the VM yet! We need some additional settings.
+Run dmidecode -t 0 and dmidecode -t 1. This gives you some information about your mainboard.
+Navigate to your VM in the webGUI and select Options -> SMBIOS settings (type1). Enter as much information as you can find there. For me this is:
+
+    UUID: <redacted>
+    Manufacturer: Gigabyte Technology Co., Ltd.
+    Product: X670 GAMING X AX
+    Family: X670 MB
+
+Then, add the following line at the top of the VM config file (/etc/pve/qemu-server/<your_vmid>.conf).
+
+    args: -cpu host,-hypervisor,kvm=off, -smbios type=0,vendor=<vendor>,version=<version>,date=<date>
+
+For me this looks like this:
+
+    args: -cpu host,-hypervisor,kvm=off, -smbios type=0,vendor="American Megatrends International",version=F8,date="07/10/2023"
+
+Note: Don't forget the quotes for strings with spaces!
+Note2: For the Manufacturer, you have to drop the comma itself and what comes after it.
+Finally, add the hidden=1 option to the cpu. That is, change the line
+
+    cpu: host,hidden=1 
+
+Now the VM can be started.
+
+# Host Configuration
 ### Windows Package Manager (winget)
 In the Powershell, insert the following code:
 ```
