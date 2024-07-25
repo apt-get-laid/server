@@ -196,7 +196,8 @@ virtio0: local-btrfs:100/vm-100-disk-2.raw,iothread=1,size=256G
 vmgenid: e3bdd6b3-5784-4164-beb7-a19e3b55f8e3
 ```
 ## Setting the best Remote Desktop performance
-Go to Computer Configuration -> Administrative Templates -> Windows Components -> Remote Desktop Services -> Remote Desktop Session Host -> Remote Session Environment.
+Go to Local Group Policy Editor ->github.com
+Computer Configuration -> Administrative Templates -> Windows Components -> Remote Desktop Services -> Remote Desktop Session Host -> Remote Session Environment.
 
 ### Limit maximum color depth
 `Disabled`
